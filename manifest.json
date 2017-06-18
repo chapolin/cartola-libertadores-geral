@@ -1,0 +1,38 @@
+{
+	"manifest_version": 2,
+	"version": "1.0",
+	"name": "Cartola Libertadores Servidor",
+	"description": "Cartola Libertadores Servidor",
+	"browser_action":{
+	    "default_icon": "images/icon-16.png",
+		"default_title": "Cartola Libertadores",
+		"default_popup": "popup.html"
+	},
+	"icons": {
+		"16": "images/icon-16.png",
+		"128": "images/icon-128.png"
+	},
+	"permissions": [ 
+		"alarms", 
+		"notifications", 
+		"background"
+	],
+	"background": {
+		"scripts": [
+			"js/jquery-1.11.2.min.js", 
+			"js/actions.js",
+			"js/background.js"
+		]
+	},
+	"web_accessible_resources": [
+		"images/icon-16.png"
+	],
+	"content_scripts": [ {
+		"js": [ 
+			"js/jquery-1.11.2.min.js",
+			"js/actions.js"
+		],
+		"matches": [ "*://*/*", "file://*/*" ]
+	}],
+	"offline_enabled": false
+}

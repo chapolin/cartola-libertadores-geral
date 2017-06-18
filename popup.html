@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+	<link rel="stylesheet" href="css/popup.css">
+	<script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>
+	<script type="text/javascript" src="js/actions.js"></script>
+</head>
+<body>
+	<div id="container">
+		<p class="logo"></p>
+		<button id="botaoSalvar">Salvar</button><br /><br />
+		<strong>Chave dos Clientes (Divulgar esta chave para os jogadores):</strong><br />
+		<em class="clienteChave"></em>
+		<hr />
+		<h3 id="mensagens"></h3>
+		<form id="formJogadores">
+			<h1>Configura&#xE7;&#xE3;o Inicial</h1>
+			<fieldset>
+				<labe>E-mail admin: </label>
+				<input name="emailAdmin" type="email" size="60" /><br /><br />
+				<label>Lista de Slugs dos times do Cartola ( Separados por v&#xED;rgula ):</label><br />
+				<input type="text" class="jogadoresArray" /><input type="button" value="Salvar" class="salvaJogadores" />
+			</fieldset>
+		</form>
+		<br />
+		<div id="placeHolder"></div>
+	</div>
+	<script type="text/javascript" src="js/popup.js"></script>
+</body>
+</html>
