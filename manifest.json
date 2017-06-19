@@ -1,6 +1,6 @@
 {
 	"manifest_version": 2,
-	"version": "1.0",
+	"version": "1.1",
 	"name": "Cartola Libertadores Servidor",
 	"description": "Cartola Libertadores Servidor",
 	"browser_action":{
@@ -14,16 +14,8 @@
 	},
 	"permissions": [ 
 		"alarms", 
-		"notifications", 
-		"background"
+		"notifications"
 	],
-	"background": {
-		"scripts": [
-			"js/jquery-1.11.2.min.js", 
-			"js/actions.js",
-			"js/background.js"
-		]
-	},
 	"web_accessible_resources": [
 		"images/icon-16.png"
 	],

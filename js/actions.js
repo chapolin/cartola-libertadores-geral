@@ -58,6 +58,7 @@ let cadastraJogadores = () => {
 			$.get(url, (dados) => {
 				if(dados.time) {
 					dados.time.pontuacao = 0;
+					dados.time.pontosCartola = 0;
 
 					jogadores.push(dados.time);
 				} else {
@@ -484,15 +485,17 @@ let atualizarDadosRodada = (rodadaAtual, callback) => {
 						for(let k in grupos[confronto.grupo]) {
 							if(grupos[confronto.grupo][k].time_id == timePontuar) {
 								grupos[confronto.grupo][k].pontuacao = grupos[confronto.grupo][k].pontuacao + PONTUACAO_VITORIA;
+							}
 
-								break;
+							if(grupos[confronto.grupo][k].time_id == confronto.timeA) {
+								grupos[confronto.grupo][k].pontosCartola = grupos[confronto.grupo][k].pontosCartola + pontosTimeA;
+							} else if(grupos[confronto.grupo][k].time_id == confronto.timeB) {
+								grupos[confronto.grupo][k].pontosCartola = grupos[confronto.grupo][k].pontosCartola + pontosTimeB;
 							}
 						}
 					}
 					
 					// Segunda fase e outras somente atualizar confrontos
-					// gravar pontos do cartola pra refazer pontuacao se necessario?
-
 					next();
 				}
 			});
@@ -525,15 +528,31 @@ let montarTabelaGrupos = () => {
 			let indice = parseInt(i) + 1;
 
 			$("#placeHolder").append(`<h2 class="grupo-label"># GRUPO ${indice}</h2>`);
-			$("#placeHolder").append(`<ul id="grupo_${indice}" class=\"grupoItens\"></ul>`);
+			$("#placeHolder").append(`
+				<table id="grupo_${indice}" class=\"grupoItens\">
+					<tbody>
+					<tr>
+						<th class="left">Jogador</td>
+						<th class="left">Time</td>
+						<th>Pontos</td>
+					</tr>
+					</tbody>
+				</table>
+			`);
 
 			for(let j in grupos[i]) {
-				$(`#placeHolder ul#grupo_${indice}`).append(`<li>${grupos[i][j].nome} pontos: ${grupos[i][j].pontuacao}</li>`);
+				$(`#placeHolder table#grupo_${indice}`).append(`
+					<tr>
+						<td>${grupos[i][j].nome_cartola}</td>
+						<td>${grupos[i][j].nome}</td>
+						<td class="pontosGrupo">${grupos[i][j].pontuacao}</td>
+					</tr>
+				`);
 			}
 
 			if(confrontosFase1Ida) {
 				$("#placeHolder").append(`<h2 class="jogos-label jogos-ida-titulo jogos-ida-titulo-${indice}" data-indice="${indice}"># JOGOS DE IDA</h2>`);
-				$("#placeHolder").append(`<table id="jogos_ida_grupo_${indice}" class=\"grupoJogosItens jogos-ida-${indice}\"></table>`);
+				$("#placeHolder").append(`<table id="jogos_ida_grupo_${indice}" class=\"grupoJogosItens jogos-ida jogos-ida-${indice}\"></table>`);
 				let contador = 1;
 
 				for(let k in confrontosFase1Ida[i]) {
@@ -542,12 +561,12 @@ let montarTabelaGrupos = () => {
 
 					$(`#placeHolder table#jogos_ida_grupo_${indice}`).append(
 						`<tr${contador%2 == 0 ? " class=\"corNao\"": ""}>
-							<td class="colRodada">${confrontosFase1Ida[i][k].rodada}</td>
-							<td class="colNomeCasa${confrontosFase1Ida[i][k].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}</td>"
+							<td class="colRodada">#${confrontosFase1Ida[i][k].rodada - 1}</td>
+							<td class="colNomeCasa${confrontosFase1Ida[i][k].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}${casa.pontos ? "<span class=\"pontosCasa\">( " + casa.pontos.toFixed(2) + " )": ""}</td>
 							<td class="colImagemCasa"><img src="${casa.escudo}" width="35" /></td>
 							<td class="colVs"><img src="${chrome.extension.getURL("images/vs-" + (contador%2) + ".jpg")}" width="20" /></td>
 							<td class="colImagemFora"><img src="${fora.escudo}" width="35" /></td>
-							<td class="colNomeFora${confrontosFase1Ida[i][k].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}</td>
+							<td class="colNomeFora${confrontosFase1Ida[i][k].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}${fora.pontos ? "<span class=\"pontosFora\">( " + fora.pontos.toFixed(2) + " )": ""}</td>
 						</tr>`
 					);
 
@@ -565,12 +584,12 @@ let montarTabelaGrupos = () => {
 						fora = confrontosFase1Volta[i][k].fora;
 					$(`#placeHolder table#jogos_volta_grupo_${indice}`).append(
 						`<tr${contador%2 == 0 ? " class=\"corNao\"": ""}>
-							<td class="colRodada">${confrontosFase1Volta[i][k].rodada}</td>
-							<td class="colNomeCasa${confrontosFase1Volta[i][k].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}</td>
+							<td class="colRodada">#${confrontosFase1Volta[i][k].rodada - 1}</td>
+							<td class="colNomeCasa${confrontosFase1Volta[i][k].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}${casa.pontos ? "<span class=\"pontosCasa\">( " + casa.pontos.toFixed(2) + " )": ""}</td>
 							<td class="colImagemCasa"><img src="${casa.escudo}" width="35" /></td>
 							<td class="colVs"><img src="${chrome.extension.getURL("images/vs-" + (contador%2) + ".jpg")}" width="20" /></td>
 							<td class="colImagemFora"><img src="${fora.escudo}" width="35" /></td>
-							<td class="colNomeFora${confrontosFase1Volta[i][k].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}</td>
+							<td class="colNomeFora${confrontosFase1Volta[i][k].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}${fora.pontos ? "<span class=\"pontosFora\">( " + fora.pontos.toFixed(2) + " )": ""}</td>
 						</tr>`
 					);
 
@@ -583,6 +602,13 @@ let montarTabelaGrupos = () => {
 	$(".jogos-ida-titulo, .jogos-volta-titulo").after().click(function() {
 		mostrarJogos($(this).data("indice"));
 	});
+
+	let ultimoJogoFase1 = confrontosFase1Ida[confrontosFase1Ida.length - 1][confrontosFase1Ida[0].length - 1];
+
+	if(ultimoJogoFase1.vencedor) {
+		$(".jogos-volta-titulo, .jogos-volta").show();
+		$(".jogos-ida-titulo, .jogos-ida").hide();
+	}
 };
 
 let loop = function(name, array, callback, finalCallback) {

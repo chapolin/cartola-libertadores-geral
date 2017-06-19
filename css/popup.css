@@ -60,7 +60,7 @@
   padding: 7px;
 }
 
-.listaJogadores, .grupoItens{
+.listaJogadores {
   list-style: decimal;
 }
 
@@ -68,6 +68,29 @@
   border-collapse: collapse; 
   width: 500px;
   border: 1px solid #c5c2c2;
+}
+
+.grupoItens {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grupoItens tr:nth-child(2), .grupoItens tr:nth-child(3) {
+  background: #d0d0d0;
+  color: #0d8c31;
+}
+
+.grupoItens tr td, .grupoItens tr th {
+  border: 1px solid #e4e4e4;
+  padding: 5px;
+}
+
+.grupoItens tr th.left {
+  text-align: left
+}
+
+.grupoItens tr td.pontosGrupo {
+  text-align: center;
 }
 
 .grupoJogosItens tr {
@@ -84,7 +107,7 @@
   border-bottom:0
 }
 
-.listaJogadores li, .grupoItens li{
+.listaJogadores li {
   margin: 3px;
   line-height: 15px;
   font-size: 15px;
@@ -104,7 +127,8 @@
   font-family: sans-serif;
 }
 
-.colImagemCasa {
+.colImagemCasa, .colImagemFora {
+  position: relative;
   text-align: center
 }
 
@@ -120,11 +144,7 @@
   font-family: sans-serif;
 }
 
-.colImagemFora {
-  text-align: center
-}
-
-.vencedorCasa::before {
+.vencedorCasa span.pontosCasa::before {
   content: "";
   float: right;
   text-indent: 999px;
@@ -135,7 +155,7 @@
   background: url(../images/winner.png) no-repeat center;
 }
 
-.vencedorFora::after {
+.vencedorFora span.pontosFora::after {
   content: "";
   float: left;
   text-indent: 999px;
@@ -144,4 +164,26 @@
   text-align: center;
   height: 16px;
   background: url(../images/winner.png) no-repeat center;
+}
+
+.data-atualizacao {
+  color:#999
+}
+
+.pontosCasa, .pontosFora {
+  font-weight: normal;
+  font-style: italic;
+  font-size: 11px;
+  color: #008a00;
+  display: block;
+  width: 180px;
+  margin-top: 5px;
+}
+
+.pontosCasa {
+  float: right;
+}
+
+.pontosFora {
+  float: left;
 }
