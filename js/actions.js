@@ -23,6 +23,7 @@ let bindEventos = () => {
 	$(".salvaJogadores").click(salvarDados);
 	$(".logo").html(`<img src="${chrome.extension.getURL("images/logo.png")}" />`);
 	$("#botaoSalvar").click(enviarDados);
+	$("#botaoGerarOitavas").click(verificarSeGeraOitavas);
 };
 
 let salvarDados = () => {
@@ -149,7 +150,7 @@ let gerarConfrontosIda = () => {
 			let casa = grupos[i][j];
 
 			for(let k = 0; k < copyGrupoItens.length; k++) {
-				let nextIndex = parseInt(k) + 1, order = 0;
+				let nextIndex = parseInt(k) + 1;
 
 				if(copyGrupoItens[ nextIndex ]) {
 					let fora = copyGrupoItens[nextIndex];
@@ -160,16 +161,9 @@ let gerarConfrontosIda = () => {
 
 					if(confrontosFase1[i][confrontosFase1[i].length - 1] && confrontosFase1[i][confrontosFase1[i].length - 1].casa.id == casa.time_id || 
 						confrontosFase1[i][confrontosFase1[i].length - 1] && confrontosFase1[i][confrontosFase1[i].length - 1].fora.id == fora.time_id) {
-						
-						order = 1;
-
-						if(k%3 == 0) {
-							order = -1;
-						}
 					}
 
 					confrontosFase1[i].push({
-						order: order,
 						vencedor: null,
 						casa: {
 							id: casa.time_id,
@@ -221,7 +215,7 @@ let gerarConfrontosVolta = () => {
 			let casa = copyGrupoItens2[j];
 
 			for(let k = 0; k < copyGrupoItens.length; k++) {
-				let nextIndex = parseInt(k) + 1, order = 0;
+				let nextIndex = parseInt(k) + 1;
 
 				if(copyGrupoItens[ nextIndex ]) {
 					let fora = copyGrupoItens[nextIndex];
@@ -232,16 +226,9 @@ let gerarConfrontosVolta = () => {
 
 					if(confrontosFase1[i][confrontosFase1[i].length - 1] && confrontosFase1[i][confrontosFase1[i].length - 1].casa.id == casa.time_id || 
 						confrontosFase1[i][confrontosFase1[i].length - 1] && confrontosFase1[i][confrontosFase1[i].length - 1].fora.id == fora.time_id) {
-						
-						order = 1;
-
-						if(k%3 == 0) {
-							order = -1;
-						}
 					}
 
 					confrontosFase1[i].push({
-						order: order,
 						vencedor: null,
 						casa: {
 							id: casa.time_id,
@@ -270,8 +257,6 @@ let gerarConfrontosVolta = () => {
 
 let definirRodadas = (confrontos, index, rodadaContador) => {
 	let grupos = localStorage.getObj("grupos"), arrayControleRodada = {};
-
-	confrontos[index].sort(sortByOrder);
 
 	confrontos[index].map((confronto, indice, array) => {
 		for(let i = 0; i < numeroRodadas(grupos[index].length); i++) {
@@ -315,22 +300,6 @@ let pegarJogadorRandom = () => {
 	}
 };
 
-let construirListaJogadores = (jogadores) => {
-	$("#placeHolder").html("<ul class=\"listaJogadores\"></ul>");
-
-	for(let i in jogadores) {
-		$("#placeHolder ul").append(`<li><strong>${jogadores[i].nome}</strong> (<em> ${jogadores[i].nome_cartola} </em>)</li>`);
-	}
-
-	$("#placeHolder").append("<input type=\"button\" class=\"botaoFinalizarCadastro\" value=\"Todos os times est&#xE3;o corretos?\" />");
-	$("#placeHolder").append("<input type=\"button\" class=\"botaoRefazer\" value=\"Refazer\" />");
-
-	$(".botaoRefazer").click(refazerCadastro);
-	$(".botaoFinalizarCadastro").click(() => {
-		finalizarCadastro(jogadores);
-	});
-};
-
 let refazerCadastro = () => {
 	$(".jogadoresArray").val("");
 	$("#placeHolder").html("");
@@ -356,63 +325,8 @@ let mostrarMensagem = (mensagem, timeout = 5000, sucesso = false) => {
 
 let montarHtml = () => {
 	montarDadosRodada(() => {
-		montarTabelaGrupos();
+		montarTabelaJogos();
 	});
-};
-
-let montarDadosRodada = (callback) => {
-	let grupos = localStorage.getObj("grupos");
-
-	if(grupos) {
-		let admin = localStorage.getObj('admin');
-		
-		$.get(API_DADOS_RODADA, (rodada) => {
-			$("#placeHolder").append("<h1>Dados Rodada</h1>");
-			$("#placeHolder").append(
-				`
-					<h2>Rodada atual: ${rodada.rodada_atual}</h2>
-					<p><strong>Status mercado:</strong> ${statusMercado(rodada.status_mercado)}</p>
-				`
-			);
-
-			if(rodada.status_mercado == 1) {
-				$("#placeHolder").append(
-					`
-					<p>
-							<strong>Hora do fechamento:</strong>
-							<em> ${ajustaDataNumero(rodada.fechamento.dia)}.${ajustaDataNumero(rodada.fechamento.mes)}.${rodada.fechamento.ano} &#xE0;s ${ajustaDataNumero(rodada.fechamento.hora)}:${ajustaDataNumero(rodada.fechamento.minuto)}</em>
-						</p>
-					`
-				);
-			} else if(rodada.status_mercado == 4) {
-				// Ou status == 2?
-				$("#placeHolder").append(
-					`
-					<p>
-							<strong>Mercado fecha em:</strong>
-							<em> ${ajustaDataNumero(rodada.fechamento.dia)}.${ajustaDataNumero(rodada.fechamento.mes)}.${rodada.fechamento.ano} &#xE0;s ${ajustaDataNumero(rodada.fechamento.hora)}:${ajustaDataNumero(rodada.fechamento.minuto)}</em>
-						</p>
-					`
-				);
-			}
-
-			if(rodada.status_mercado == 1) {
-				let rodadaAtualizacao = localStorage.getObj("rodadaAtualizacao");
-
-				if(!rodadaAtualizacao || rodada.rodada_atual > rodadaAtualizacao.rodada) {
-					atualizarDadosRodada(rodada.rodada_atual, callback);
-				} else {
-					callback();
-				}
-			} else {
-				callback();
-			}
-
-			$('.clienteChave').html(admin._id);
-		});
-	} else {
-		$("#formJogadores").show();
-	}
 };
 
 let atualizarDadosRodada = (rodadaAtual, callback) => {
@@ -487,6 +401,10 @@ let atualizarDadosRodada = (rodadaAtual, callback) => {
 								grupos[confronto.grupo][k].pontuacao = grupos[confronto.grupo][k].pontuacao + PONTUACAO_VITORIA;
 							}
 
+							if(!grupos[confronto.grupo][k].pontosCartola) {
+								grupos[confronto.grupo][k].pontosCartola = 0;
+							}
+
 							if(grupos[confronto.grupo][k].time_id == confronto.timeA) {
 								grupos[confronto.grupo][k].pontosCartola = grupos[confronto.grupo][k].pontosCartola + pontosTimeA;
 							} else if(grupos[confronto.grupo][k].time_id == confronto.timeB) {
@@ -516,99 +434,6 @@ let atualizarDadosRodada = (rodadaAtual, callback) => {
 
 		callback();
 	});
-};
-
-let montarTabelaGrupos = () => {
-	let grupos = localStorage.getObj("grupos"),
-		confrontosFase1Ida = localStorage.getObj("confrontosFase1Ida"),
-		confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta");
-
-	if(grupos) {
-		for(let i in grupos) {
-			let indice = parseInt(i) + 1;
-
-			$("#placeHolder").append(`<h2 class="grupo-label"># GRUPO ${indice}</h2>`);
-			$("#placeHolder").append(`
-				<table id="grupo_${indice}" class=\"grupoItens\">
-					<tbody>
-					<tr>
-						<th class="left">Jogador</td>
-						<th class="left">Time</td>
-						<th>Pontos</td>
-					</tr>
-					</tbody>
-				</table>
-			`);
-
-			for(let j in grupos[i]) {
-				$(`#placeHolder table#grupo_${indice}`).append(`
-					<tr>
-						<td>${grupos[i][j].nome_cartola}</td>
-						<td>${grupos[i][j].nome}</td>
-						<td class="pontosGrupo">${grupos[i][j].pontuacao}</td>
-					</tr>
-				`);
-			}
-
-			if(confrontosFase1Ida) {
-				$("#placeHolder").append(`<h2 class="jogos-label jogos-ida-titulo jogos-ida-titulo-${indice}" data-indice="${indice}"># JOGOS DE IDA</h2>`);
-				$("#placeHolder").append(`<table id="jogos_ida_grupo_${indice}" class=\"grupoJogosItens jogos-ida jogos-ida-${indice}\"></table>`);
-				let contador = 1;
-
-				for(let k in confrontosFase1Ida[i]) {
-					let casa = confrontosFase1Ida[i][k].casa,
-						fora = confrontosFase1Ida[i][k].fora;
-
-					$(`#placeHolder table#jogos_ida_grupo_${indice}`).append(
-						`<tr${contador%2 == 0 ? " class=\"corNao\"": ""}>
-							<td class="colRodada">#${confrontosFase1Ida[i][k].rodada - 1}</td>
-							<td class="colNomeCasa${confrontosFase1Ida[i][k].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}${casa.pontos ? "<span class=\"pontosCasa\">( " + casa.pontos.toFixed(2) + " )": ""}</td>
-							<td class="colImagemCasa"><img src="${casa.escudo}" width="35" /></td>
-							<td class="colVs"><img src="${chrome.extension.getURL("images/vs-" + (contador%2) + ".jpg")}" width="20" /></td>
-							<td class="colImagemFora"><img src="${fora.escudo}" width="35" /></td>
-							<td class="colNomeFora${confrontosFase1Ida[i][k].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}${fora.pontos ? "<span class=\"pontosFora\">( " + fora.pontos.toFixed(2) + " )": ""}</td>
-						</tr>`
-					);
-
-					contador++;
-				}
-			}
-
-			if(confrontosFase1Volta) {
-				$("#placeHolder").append(`<h2 class="jogos-label jogos-volta-titulo jogos-volta-titulo-${indice}" data-indice="${indice}"># JOGOS DE VOLTA</h2>`);
-				$("#placeHolder").append(`<table id="jogos_volta_grupo_${indice}" class=\"grupoJogosItens jogos-volta jogos-volta-${indice}\"></table>`);
-				let contador = 1;
-
-				for(let k in confrontosFase1Volta[i]) {
-					let casa = confrontosFase1Volta[i][k].casa,
-						fora = confrontosFase1Volta[i][k].fora;
-					$(`#placeHolder table#jogos_volta_grupo_${indice}`).append(
-						`<tr${contador%2 == 0 ? " class=\"corNao\"": ""}>
-							<td class="colRodada">#${confrontosFase1Volta[i][k].rodada - 1}</td>
-							<td class="colNomeCasa${confrontosFase1Volta[i][k].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}${casa.pontos ? "<span class=\"pontosCasa\">( " + casa.pontos.toFixed(2) + " )": ""}</td>
-							<td class="colImagemCasa"><img src="${casa.escudo}" width="35" /></td>
-							<td class="colVs"><img src="${chrome.extension.getURL("images/vs-" + (contador%2) + ".jpg")}" width="20" /></td>
-							<td class="colImagemFora"><img src="${fora.escudo}" width="35" /></td>
-							<td class="colNomeFora${confrontosFase1Volta[i][k].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}${fora.pontos ? "<span class=\"pontosFora\">( " + fora.pontos.toFixed(2) + " )": ""}</td>
-						</tr>`
-					);
-
-					contador++;
-				}
-			}
-		}
-	}
-
-	$(".jogos-ida-titulo, .jogos-volta-titulo").after().click(function() {
-		mostrarJogos($(this).data("indice"));
-	});
-
-	let ultimoJogoFase1 = confrontosFase1Ida[confrontosFase1Ida.length - 1][confrontosFase1Ida[0].length - 1];
-
-	if(ultimoJogoFase1.vencedor) {
-		$(".jogos-volta-titulo, .jogos-volta").show();
-		$(".jogos-ida-titulo, .jogos-ida").hide();
-	}
 };
 
 let loop = function(name, array, callback, finalCallback) {
@@ -643,36 +468,20 @@ let statusMercado = (status) => {
 	switch(status) {
 		case 1: 
 			return "Aberto";
-		break;
-
 		case 2: 
 			return "Fechado";
-		break;
-
 		case 3: 
 			return "Em atualiza&#xE7;&#xE3;o";
-		break;
-
 		case 4: 
 			return "Em manuten&#xE7;&#xE3;o";
-		break;
-
 		default: 
 			return "N/D";
-		break;
 	}
 };
 
 let sortByRodada = (a, b) => {
 	let x = a.rodada;
 	let y = b.rodada;
-
-	return x < y ? -1 : x > y ? 1 : 0;
-};
-
-let sortByOrder = (a, b) => {
-	let x = a.order;
-	let y = b.order;
 
 	return x < y ? -1 : x > y ? 1 : 0;
 };
@@ -684,19 +493,21 @@ let sortByPontos = (a, b) => {
 	return x < y ? 1 : x > y ? -1 : 0;
 };
 
-let mostrarJogos = (indice) => {
-	if($(`.jogos-volta-${indice}`).is(':visible')) {
-		$(`.jogos-ida-${indice}`).show();
-		$(`.jogos-ida-titulo-${indice}`).show();
+let mostrarJogos = (destino1, destino2, indice = null) => {
+	indiceObjeto = indice ? '-' + indice : '';
 
-		$(`.jogos-volta-${indice}`).hide();
-		$(`.jogos-volta-titulo-${indice}`).hide();
+	if($(`.${destino1}${indiceObjeto}`).is(':visible')) {
+		$(`.${destino1}${indiceObjeto}`).hide();
+		$(`.${destino1}-titulo${indiceObjeto}`).hide();
+
+		$(`.${destino2}${indiceObjeto}`).show();
+		$(`.${destino2}-titulo${indiceObjeto}`).show();
 	} else {
-		$(`.jogos-ida-${indice}`).hide();
-		$(`.jogos-ida-titulo-${indice}`).hide();
+		$(`.${destino2}${indiceObjeto}`).hide();
+		$(`.${destino2}-titulo${indiceObjeto}`).hide();
 
-		$(`.jogos-volta-${indice}`).show();
-		$(`.jogos-volta-titulo-${indice}`).show();
+		$(`.${destino1}${indiceObjeto}`).show();
+		$(`.${destino1}-titulo${indiceObjeto}`).show();
 	}
 };
 
@@ -737,4 +548,77 @@ let enviarDados = () => {
 			mostrarMensagem("Erro ao salvar dados!!!");
 		}
 	});
+};
+
+let verificarSeGeraOitavas = () => {
+	const confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
+		ultimoJogoFase1Volta = confrontosFase1Volta[confrontosFase1Volta.length - 1][confrontosFase1Volta[0].length - 1];
+
+	if (ultimoJogoFase1Volta.vencedor) {
+		gerarOitavas(ultimoJogoFase1Volta);
+	} else {
+		mostrarMensagem("Ops! A primeira fase ainda n&#xE3;o acabou ;)");
+	}
+};
+
+let gerarOitavas = (ultimoConfronto) => {
+	let rodada = ultimoConfronto.rodada, grupos = localStorage.getObj("grupos"), 
+		classificados = [], confrontosOitavasIda = [], confrontosOitavasVolta = [];
+	
+	for(let i in grupos) {
+		let count = 1;
+
+		for(let j in grupos[i]) {
+			classificados.push(grupos[i][j]);
+
+			if(count%2 == 0) {
+				break;
+			}
+
+			count++;
+		}
+	}
+
+	rodada++;
+
+	// Oitavas Ida
+	confrontosOitavasIda.push(criarJogo(classificados[0], classificados[7], rodada));
+	confrontosOitavasIda.push(criarJogo(classificados[1], classificados[6], rodada));
+	confrontosOitavasIda.push(criarJogo(classificados[2], classificados[5], rodada));
+	confrontosOitavasIda.push(criarJogo(classificados[3], classificados[4], rodada));
+
+	rodada++;
+
+	// Oitavas Volta
+	confrontosOitavasVolta.push(criarJogo(classificados[7], classificados[0], rodada));
+	confrontosOitavasVolta.push(criarJogo(classificados[6], classificados[1], rodada));
+	confrontosOitavasVolta.push(criarJogo(classificados[5], classificados[2], rodada));
+	confrontosOitavasVolta.push(criarJogo(classificados[4], classificados[3], rodada));
+
+	localStorage.setObj("confrontosOitavasIda", confrontosOitavasIda);
+	localStorage.setObj("confrontosOitavasVolta", confrontosOitavasVolta);
+
+	mostrarMensagem("Oitavas de final gerada com sucesso!", 5000, true);
+};
+
+let criarJogo = (casa, fora, rodada = null) => {
+	let jogo = {
+		vencedor: null,
+		casa: {
+			id: casa.time_id,
+			nome: casa.nome,
+			escudo: casa.url_escudo_svg,
+		},
+		fora: {
+			id: fora.time_id,
+			nome: fora.nome,
+			escudo: fora.url_escudo_svg
+		}
+	};
+
+	if(rodada) {
+		jogo.rodada = rodada;
+	}
+
+	return jogo;
 };

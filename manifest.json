@@ -12,8 +12,7 @@
 		"16": "images/icon-16.png",
 		"128": "images/icon-128.png"
 	},
-	"permissions": [ 
-		"alarms", 
+	"permissions": [
 		"notifications"
 	],
 	"web_accessible_resources": [
@@ -22,7 +21,8 @@
 	"content_scripts": [ {
 		"js": [ 
 			"js/jquery-1.11.2.min.js",
-			"js/actions.js"
+			"js/actions.js",
+			"js/html.js"
 		],
 		"matches": [ "*://*/*", "file://*/*" ]
 	}],
