@@ -516,6 +516,8 @@ let enviarDados = () => {
 	grupos = localStorage.getObj("grupos"),
 	confrontosFase1Ida = localStorage.getObj("confrontosFase1Ida"),
 	confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
+	confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
+	confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
 	admin = localStorage.getObj("admin");
 
 	if(admin && admin._id) {
@@ -532,6 +534,14 @@ let enviarDados = () => {
 	
 	if(confrontosFase1Volta) {
 		objeto["confrontosFase1Volta"] = confrontosFase1Volta;
+	}
+
+	if(confrontosOitavasIda) {
+		objeto["confrontosOitavasIda"] = confrontosOitavasIda;
+	}
+	
+	if(confrontosOitavasVolta) {
+		objeto["confrontosOitavasVolta"] = confrontosOitavasVolta;
 	}
 
 	$.ajax({
