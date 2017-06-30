@@ -487,10 +487,10 @@ let sortByRodada = (a, b) => {
 };
 
 let sortByPontos = (a, b) => {
-	let x = a.pontuacao;
-	let y = b.pontuacao;
-
-	return x < y ? 1 : x > y ? -1 : 0;
+  if(a.pontuacao > b.pontuacao) return -1;
+  if(a.pontuacao < b.pontuacao) return 1;
+  if(a.pontosCartola > b.pontosCartola) return -1;
+  if(a.pontosCartola < b.pontosCartola) return 1;
 };
 
 let mostrarJogos = (destino1, destino2, indice = null) => {
