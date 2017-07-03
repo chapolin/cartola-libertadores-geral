@@ -216,9 +216,15 @@ let montarTabelaJogos = () => {
 
   // verificar se acabou jogos ida oitavas para mostrar quartas
 
-  if(confrontosOitavasIda) {
-    $(".jogos-oitavas-ida-titulo, .jogos-oitavas-ida").show();
-    $(".jogos-volta-titulo, .jogos-volta, .jogos-ida-titulo, .jogos-ida, .grupo-label, .grupoItens").hide();
+	if(confrontosOitavasIda) {
+		// Se existir empate, mudar isso para outro atributo... ex: finalizado = true
+		if(confrontosOitavasIda[0].vencedor) {
+			$(".jogos-oitavas-volta-titulo, .jogos-oitavas-volta").show();
+			$(".jogos-oitavas-ida-titulo, .jogos-oitavas-ida, .jogos-volta-titulo, .jogos-volta, .jogos-ida-titulo, .jogos-ida, .grupo-label, .grupoItens").hide();
+		} else {
+			$(".jogos-oitavas-ida-titulo, .jogos-oitavas-ida").show();
+			$(".jogos-volta-titulo, .jogos-volta, .jogos-ida-titulo, .jogos-ida, .grupo-label, .grupoItens").hide();
+		}
   } else if(ultimoJogoFase1Ida.vencedor) {
 		$(".jogos-volta-titulo, .jogos-volta").show();
 		$(".jogos-ida-titulo, .jogos-ida").hide();
