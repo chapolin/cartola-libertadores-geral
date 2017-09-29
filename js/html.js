@@ -75,6 +75,8 @@ let montarTabelaJogos = () => {
 		confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
     confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
     confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta");
+		confrontosQuartasIda = localStorage.getObj("confrontosQuartasIda"),
+    confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta");
 
   if(grupos) {
 		for(let i in grupos) {
@@ -158,7 +160,7 @@ let montarTabelaJogos = () => {
 
   if(confrontosOitavasIda) {
   	$("#placeHolder").append(`<h2 class="jogos-label jogos-oitavas-ida-titulo"># OITAVAS DE FINAL [ IDA ]</h2>`);
-    $("#placeHolder").append(`<table class=\"grupoJogosItens jogos-oitavas-ida\"></table>`);
+    $("#placeHolder").append(`<table class="grupoJogosItens jogos-oitavas-ida"></table>`);
 
     let contador = 1;
 
@@ -182,7 +184,7 @@ let montarTabelaJogos = () => {
 
   if(confrontosOitavasVolta) {
   	$("#placeHolder").append(`<h2 class="jogos-label jogos-oitavas-volta-titulo"># OITAVAS DE FINAL [ VOLTA ]</h2>`);
-    $("#placeHolder").append(`<table class=\"grupoJogosItens jogos-oitavas-volta\"></table>`);
+    $("#placeHolder").append(`<table class="grupoJogosItens jogos-oitavas-volta"></table>`);
 
     let contador = 1;
 
@@ -204,6 +206,54 @@ let montarTabelaJogos = () => {
     }
   }
 
+	if(confrontosQuartasIda) {
+  	$("#placeHolder").append(`<h2 class="jogos-label jogos-quartas-ida-titulo"># QUARTAS DE FINAL [ IDA ]</h2>`);
+    $("#placeHolder").append(`<table class="grupoJogosItens jogos-quartas-ida"></table>`);
+
+    let contador = 1;
+
+    for(let i in confrontosQuartasIda) {
+      let casa = confrontosQuartasIda[i].casa,
+        fora = confrontosQuartasIda[i].fora;
+      $(`#placeHolder table.jogos-quartas-ida`).append(
+        `<tr${contador%2 == 0 ? " class=\"corNao\"": ""}>
+          <td class="colRodada">#${confrontosQuartasIda[i].rodada - 1}</td>
+          <td class="colNomeCasa${confrontosQuartasIda[i].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}${casa.pontos ? "<span class=\"pontosCasa\">( " + casa.pontos.toFixed(2) + " )": ""}</td>
+          <td class="colImagemCasa"><img src="${casa.escudo}" width="35" /></td>
+          <td class="colVs"><img src="${chrome.extension.getURL("images/vs-" + (contador%2) + ".jpg")}" width="20" /></td>
+          <td class="colImagemFora"><img src="${fora.escudo}" width="35" /></td>
+          <td class="colNomeFora${confrontosQuartasIda[i].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}${fora.pontos ? "<span class=\"pontosFora\">( " + fora.pontos.toFixed(2) + " )": ""}</td>
+        </tr>`
+      );
+
+      contador++;
+    }
+  }
+
+	if(confrontosQuartasVolta) {
+  	$("#placeHolder").append(`<h2 class="jogos-label jogos-quartas-volta-titulo"># QUARTAS DE FINAL [ VOLTA ]</h2>`);
+    $("#placeHolder").append(`<table class="grupoJogosItens jogos-quartas-volta"></table>`);
+
+    let contador = 1;
+
+    for(let i in confrontosQuartasVolta) {
+      let casa = confrontosQuartasVolta[i].casa,
+        fora = confrontosQuartasVolta[i].fora;
+      $(`#placeHolder table.jogos-quartas-volta`).append(
+        `<tr${contador%2 == 0 ? " class=\"corNao\"": ""}>
+          <td class="colRodada">#${confrontosQuartasVolta[i].rodada - 1}</td>
+          <td class="colNomeCasa${confrontosQuartasVolta[i].vencedor == casa.id ? " vencedorCasa" : ""}">${casa.nome}${casa.pontos ? "<span class=\"pontosCasa\">( " + casa.pontos.toFixed(2) + " )": ""}</td>
+          <td class="colImagemCasa"><img src="${casa.escudo}" width="35" /></td>
+          <td class="colVs"><img src="${chrome.extension.getURL("images/vs-" + (contador%2) + ".jpg")}" width="20" /></td>
+          <td class="colImagemFora"><img src="${fora.escudo}" width="35" /></td>
+          <td class="colNomeFora${confrontosQuartasVolta[i].vencedor == fora.id ? " vencedorFora" : ""}">${fora.nome}${fora.pontos ? "<span class=\"pontosFora\">( " + fora.pontos.toFixed(2) + " )": ""}</td>
+        </tr>`
+      );
+
+      contador++;
+    }
+  }
+
 	$(".jogos-ida-titulo, .jogos-volta-titulo").after().click(function() {
 		mostrarJogos('jogos-ida', 'jogos-volta', $(this).data("indice"));
 	});
@@ -212,11 +262,24 @@ let montarTabelaJogos = () => {
 		mostrarJogos('jogos-oitavas-ida', 'jogos-oitavas-volta');
 	});
 
+	$(".jogos-quartas-ida-titulo, .jogos-quartas-volta-titulo").after().click(function() {
+		mostrarJogos('jogos-quartas-ida', 'jogos-quartas-volta');
+	});
+
 	const ultimoJogoFase1Ida = confrontosFase1Ida[confrontosFase1Ida.length - 1][confrontosFase1Ida[0].length - 1];
 
-  // verificar se acabou jogos ida oitavas para mostrar quartas
+  // verificar se acabou jogos ida quartas para mostrar semi
 
-	if(confrontosOitavasIda) {
+	if(confrontosQuartasIda) {
+		// Se existir empate, mudar isso para outro atributo... ex: finalizado = true
+		if(confrontosQuartasIda[0].vencedor) {
+			$(".jogos-quartas-volta-titulo, .jogos-quartas-volta").show();
+			$(".jogos-quartas-ida-titulo, .jogos-quartas-ida, .jogos-oitavas-ida-titulo, .jogos-oitavas-ida, .jogos-oitavas-volta-titulo, .jogos-oitavas-volta, .jogos-volta-titulo, .jogos-volta, .jogos-ida-titulo, .jogos-ida, .grupo-label, .grupoItens").hide();
+		} else {
+			$(".jogos-quartas-ida-titulo, .jogos-quartas-ida").show();
+			$(".jogos-quartas-volta-titulo, .jogos-quartas-volta, .jogos-oitavas-ida-titulo, .jogos-oitavas-ida, .jogos-oitavas-volta-titulo, .jogos-oitavas-volta, .jogos-volta-titulo, .jogos-volta, .jogos-ida-titulo, .jogos-ida, .grupo-label, .grupoItens").hide();
+		}
+  } else if(confrontosOitavasIda) {
 		// Se existir empate, mudar isso para outro atributo... ex: finalizado = true
 		if(confrontosOitavasIda[0].vencedor) {
 			$(".jogos-oitavas-volta-titulo, .jogos-oitavas-volta").show();

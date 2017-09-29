@@ -1,8 +1,8 @@
 {
 	"manifest_version": 2,
-	"version": "1.4",
-	"name": "Cartola Libertadores Servidor",
-	"description": "Cartola Libertadores Servidor",
+	"version": "1.7",
+	"name": "Cartola Libertadores",
+	"description": "Cartola Libertadores",
 	"browser_action":{
 	    "default_icon": "images/icon-16.png",
 		"default_title": "Cartola Libertadores",

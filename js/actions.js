@@ -2,19 +2,14 @@ let __countLoop = [], jogadoresUsados = [], rodadaReferencia = 0;
 
 const LIMITE_JOGADORES = 16;
 const PONTUACAO_VITORIA = 3;
+const PONTUACAO_EMPATE = 1;
 const LIMITE_GRUPOS = 4;
 const LIMITE_NORMAL_POR_GRUPO = 4;
+const NUMERO_RODADAS_GRUPO = 3;
 const API_JOGADOR = "https://api.cartolafc.globo.com/times?q=";
 const API_TIME_SLUG = "https://api.cartolafc.globo.com/time/slug/";
 const API_TIME_ID = "https://api.cartolafc.globo.com/time/id/";
-// const API_DADOS_RODADA = "https://api.cartolafc.globo.com/mercado/status";
-
-// Mock primeiro jogo oitavas
-// const API_DADOS_RODADA = "http://www.mocky.io/v2/59582a9f1100003f00a6ad55";
-
-// Mock segundo jogo oitavas
-const API_DADOS_RODADA = "http://www.mocky.io/v2/595835011100004100a6ad62";
-
+const API_DADOS_RODADA = "https://api.cartolafc.globo.com/mercado/status";
 const API_TRINDADE_CARTOLA_SAVE = "http://138.197.21.33/api/cartola/save";
 const API_TRINDADE_CARTOLA_CREATE_KEY = "http://138.197.21.33/api/cartola/createkey";
 
@@ -141,7 +136,6 @@ let gerarGrupos = (jogadores) => {
 		gerarConfrontosIda();
 		gerarConfrontosVolta();
 
-		// Recarregar dados
 		history.go(0);
 	});
 };
@@ -267,7 +261,7 @@ let definirRodadas = (confrontos, index, rodadaContador) => {
 	let grupos = localStorage.getObj("grupos"), arrayControleRodada = {};
 
 	confrontos[index].map((confronto, indice, array) => {
-		for(let i = 0; i < numeroRodadas(grupos[index].length); i++) {
+		for(let i = 0; i < NUMERO_RODADAS_GRUPO; i++) {
 			if(!arrayControleRodada[i]) {
 				arrayControleRodada[i] = [];
 			}
@@ -285,12 +279,6 @@ let definirRodadas = (confrontos, index, rodadaContador) => {
 
 	confrontos[index].sort(sortByRodada);
 };
-
-let numeroRodadas = (n) => {
-	let referencia = {"4": 3, "5": 5};
-
-	return referencia[n];
-}; 
 
 let pegarJogadorRandom = () => {
 	if(jogadoresUsados.length === LIMITE_JOGADORES) {
@@ -367,12 +355,17 @@ let atualizarDadosRodada = (rodada, callback) => {
 		confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
 		confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
 		confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
+		confrontosQuartasIda = localStorage.getObj("confrontosQuartasIda"),
+		confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
+		toleranciaEmpate = localStorage.getObj("toleranciaEmpate") || 0,
 		confrontos = [], gerouAlteracaoGrupo = false, gerouAlteracaoFinais = false;
 
 	confrontosGrupos(confrontos, confrontosFase1Ida, rodada, "grupoIda");
 	confrontosGrupos(confrontos, confrontosFase1Volta, rodada, "grupoVolta");
 	confrontosFinais(confrontos, confrontosOitavasIda, rodada, "oitavasIda");
 	confrontosFinais(confrontos, confrontosOitavasVolta, rodada, "oitavasVolta");
+	confrontosFinais(confrontos, confrontosQuartasIda, rodada, "quartasIda");
+	confrontosFinais(confrontos, confrontosQuartasVolta, rodada, "quartasVolta");
 
 	loop("atualizartimes", confrontos, (confronto, next) => {
 		let pontosTimeA = 0, pontosTimeB = 0, timePontuar = null;
@@ -383,12 +376,12 @@ let atualizarDadosRodada = (rodada, callback) => {
 			$.get(API_TIME_ID + confronto.timeB, (dadosB) => {
 				pontosTimeB = dadosB.pontos ? dadosB.pontos : 0;
 
-				if(pontosTimeA > pontosTimeB) {
+				if(pontosTimeA - toleranciaEmpate > pontosTimeB) {
 					timePontuar = confronto.timeA;
-				} else if(pontosTimeB > pontosTimeA) {
+				} else if(pontosTimeB - toleranciaEmpate > pontosTimeA) {
 					timePontuar = confronto.timeB;
 				} else {
-					next();
+					timePontuar = 1;
 				}
 
 				if(timePontuar && (confronto.fase === "grupoIda" || confronto.fase === "grupoVolta")) {
@@ -403,6 +396,8 @@ let atualizarDadosRodada = (rodada, callback) => {
 					for(let k in grupos[confronto.grupo]) {
 						if(grupos[confronto.grupo][k].time_id == timePontuar) {
 							grupos[confronto.grupo][k].pontuacao = grupos[confronto.grupo][k].pontuacao + PONTUACAO_VITORIA;
+						} else if((grupos[confronto.grupo][k].time_id == confronto.timeA || grupos[confronto.grupo][k].time_id == confronto.timeB) && timePontuar == 1) {
+							grupos[confronto.grupo][k].pontuacao = grupos[confronto.grupo][k].pontuacao + PONTUACAO_EMPATE;
 						}
 
 						if(!grupos[confronto.grupo][k].pontosCartola) {
@@ -415,13 +410,17 @@ let atualizarDadosRodada = (rodada, callback) => {
 							grupos[confronto.grupo][k].pontosCartola = grupos[confronto.grupo][k].pontosCartola + pontosTimeB;
 						}
 					}
-				} else if(timePontuar && (confronto.fase === "oitavasIda" || confronto.fase === "oitavasVolta")) {
+				} else if(timePontuar && (confronto.fase === "oitavasIda" || confronto.fase === "oitavasVolta" || confronto.fase === "quartasIda" || confronto.fase === "quartasVolta")) {
 					gerouAlteracaoFinais = true;
 
 					if(confronto.fase === "oitavasIda") {
 						adicionarInfoAoConfronto(confrontosOitavasIda, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
 					} else if(confronto.fase === "oitavasVolta") {
 						adicionarInfoAoConfronto(confrontosOitavasVolta, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
+					} else if(confronto.fase === "quartasIda") {
+						adicionarInfoAoConfronto(confrontosQuartasIda, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
+					} else if(confronto.fase === "quartasVolta") {
+						adicionarInfoAoConfronto(confrontosQuartasVolta, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
 					}
 				}
 
@@ -440,6 +439,9 @@ let atualizarDadosRodada = (rodada, callback) => {
 		} else if(gerouAlteracaoFinais) {
 			localStorage.setObj("confrontosOitavasIda", confrontosOitavasIda);
 			localStorage.setObj("confrontosOitavasVolta", confrontosOitavasVolta);
+
+			localStorage.setObj("confrontosQuartasIda", confrontosQuartasIda);
+			localStorage.setObj("confrontosQuartasVolta", confrontosQuartasVolta);
 		}
 
 		if(gerouAlteracaoGrupo || gerouAlteracaoFinais) {
@@ -507,9 +509,7 @@ let sortByPontos = (a, b) => {
   if(a.pontosCartola < b.pontosCartola) return 1;
 };
 
-let sortByVitorias = (a, b) => {
-  if(a.vitorias > b.vitorias) return -1;
-  if(a.vitorias < b.vitorias) return 1;
+let sortByPontosCartola = (a, b) => {
   if(a.pontos > b.pontos) return -1;
   if(a.pontos < b.pontos) return 1;
 };
@@ -539,6 +539,8 @@ let enviarDados = () => {
 	confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
 	confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
 	confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
+	confrontosQuartasIda = localStorage.getObj("confrontosQuartasIda"),
+	confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
 	admin = localStorage.getObj("admin");
 
 	if(admin && admin._id) {
@@ -565,6 +567,14 @@ let enviarDados = () => {
 		objeto["confrontosOitavasVolta"] = confrontosOitavasVolta;
 	}
 
+	if(confrontosQuartasIda) {
+		objeto["confrontosQuartasIda"] = confrontosQuartasIda;
+	}
+	
+	if(confrontosQuartasVolta) {
+		objeto["confrontosQuartasVolta"] = confrontosQuartasVolta;
+	}
+
 	$.ajax({
 		beforeSend: function(request) {
 			request.setRequestHeader("Content-Type","application/json");
@@ -583,9 +593,12 @@ let enviarDados = () => {
 
 let verificarSeGeraOitavas = () => {
 	const confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
+		confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
 		ultimoJogoFase1Volta = confrontosFase1Volta[confrontosFase1Volta.length - 1][confrontosFase1Volta[0].length - 1];
 
-	if (ultimoJogoFase1Volta.vencedor) {
+	if(confrontosOitavasVolta) {
+		mostrarMensagem("Oitavas de final j&#xE1; foram geradas ;)");
+	} else if (ultimoJogoFase1Volta.vencedor) {
 		gerarOitavas(ultimoJogoFase1Volta);
 	} else {
 		mostrarMensagem("Ops! A primeira fase ainda n&#xE3;o acabou ;)");
@@ -594,67 +607,16 @@ let verificarSeGeraOitavas = () => {
 
 let verificarSeGeraQuartas = () => {
 	const confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
+		confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
 		ultimoJogoOitavasVolta = confrontosOitavasVolta[confrontosOitavasVolta.length - 1];
 
-	if (ultimoJogoOitavasVolta.vencedor) {
+	if(confrontosQuartasVolta) {
+		mostrarMensagem("Quartas de final j&#xE1; foram geradas ;)");
+	} else if (ultimoJogoOitavasVolta.vencedor) {
 		gerarQuartas(ultimoJogoOitavasVolta);
 	} else {
 		mostrarMensagem("Ops! As oitavas de final ainda n&#xE3;o acabou ;)");
 	}
-};
-
-let gerarQuartas = (ultimoConfronto) => {
-	let rodada = ultimoConfronto.rodada, resultados = {},
-		confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda")
-		confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta");
-
-	for(let i in confrontosOitavasIda) {
-		const timeCasa = confrontosOitavasIda[i].casa,
-			timeFora = confrontosOitavasIda[i].fora,
-			vencedor = confrontosOitavasIda[i].vencedor;
-
-		if(!resultados[timeCasa.id]) {
-			resultados[timeCasa.id] = { vitorias: 0, pontos: 0 };
-		}
-
-		if(!resultados[timeFora.id]) {
-			resultados[timeFora.id] = { vitorias: 0, pontos: 0 };
-		}
-
-		if(vencedor === timeCasa.id) {
-			resultados[timeCasa.id].vitorias++;
-			resultados[timeCasa.id].pontos+= timeCasa.pontos;
-		} else if(vencedor === timeFora.id) {
-			resultados[timeFora.id].vitorias++;
-			resultados[timeFora.id].pontos+= timeFora.pontos;
-		}
-	}
-
-	for(let j in confrontosOitavasVolta) {
-		const timeCasa = confrontosOitavasVolta[j].casa,
-			timeFora = confrontosOitavasVolta[j].fora,
-			vencedor = confrontosOitavasVolta[j].vencedor;
-
-		if(!resultados[timeCasa.id]) {
-			resultados[timeCasa.id] = { vitorias: 0, pontos: 0 };
-		}
-
-		if(!resultados[timeFora.id]) {
-			resultados[timeFora.id] = { vitorias: 0, pontos: 0 };
-		}
-
-		if(vencedor === timeCasa.id) {
-			resultados[timeCasa.id].vitorias++;
-			resultados[timeCasa.id].pontos+= timeCasa.pontos;
-		} else if(vencedor === timeFora.id) {
-			resultados[timeFora.id].vitorias++;
-			resultados[timeFora.id].pontos+= timeFora.pontos;
-		}
-	}
-
-	resultados.sort(sortByVitorias);
-
-	console.log(resultados);
 };
 
 let gerarOitavas = (ultimoConfronto) => {
@@ -695,6 +657,109 @@ let gerarOitavas = (ultimoConfronto) => {
 	localStorage.setObj("confrontosOitavasVolta", confrontosOitavasVolta);
 
 	mostrarMensagem("Oitavas de final gerada com sucesso!", 5000, true);
+};
+
+let gerarQuartas = (ultimoConfronto) => {
+	let rodada = ultimoConfronto.rodada;
+
+	const resultados = [], resultadosArr = [],
+		confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
+		confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
+		confrontosQuartasIda = [], confrontosQuartasVolta = [];
+
+	let contador = 0;
+
+	for(const i in confrontosOitavasIda) {
+		const timeCasa = confrontosOitavasIda[i].casa,
+			timeFora = confrontosOitavasIda[i].fora,
+			vencedor = confrontosOitavasIda[i].vencedor;
+
+		if(!resultados[contador]) {
+			resultados[contador] = {};
+
+			resultados[contador][timeCasa.id] = { vitorias: 0, pontos: 0 };
+			resultados[contador][timeFora.id] = { vitorias: 0, pontos: 0 };
+		}
+
+		if(vencedor === timeCasa.id) {
+			resultados[contador][timeCasa.id].vitorias++;
+		} else if(vencedor === timeFora.id) {
+			resultados[contador][timeFora.id].vitorias++;
+		}
+
+		resultados[contador][timeCasa.id].pontos+= timeCasa.pontos;
+		resultados[contador][timeFora.id].pontos+= timeFora.pontos;
+
+		contador++;
+	}
+
+	contador = 0;
+
+	for(const j in confrontosOitavasVolta) {
+		const timeCasa = confrontosOitavasVolta[j].casa,
+			timeFora = confrontosOitavasVolta[j].fora,
+			vencedor = confrontosOitavasVolta[j].vencedor;
+
+		if(vencedor === timeCasa.id) {
+			resultados[contador][timeCasa.id].vitorias++;
+		} else if(vencedor === timeFora.id) {
+			resultados[contador][timeFora.id].vitorias++;
+		}
+
+		resultados[contador][timeCasa.id].pontos+= timeCasa.pontos;
+		resultados[contador][timeFora.id].pontos+= timeFora.pontos;
+
+		contador++;
+	}
+
+	const classificado1 = buscaGanhadorConfrontos(resultados[0]),
+		classificado2 = buscaGanhadorConfrontos(resultados[3]),
+		classificado3 = buscaGanhadorConfrontos(resultados[1]),
+		classificado4 = buscaGanhadorConfrontos(resultados[2]);
+
+	rodada++;
+
+	// Quartas Ida
+	confrontosQuartasIda.push(criarJogo(classificado1, classificado2, rodada));
+	confrontosQuartasIda.push(criarJogo(classificado3, classificado4, rodada));
+
+	rodada++;
+
+	// Quartas Volta
+	confrontosQuartasVolta.push(criarJogo(classificado2, classificado1, rodada));
+	confrontosQuartasVolta.push(criarJogo(classificado4, classificado3, rodada));
+
+	localStorage.setObj("confrontosQuartasIda", confrontosQuartasIda);
+	localStorage.setObj("confrontosQuartasVolta", confrontosQuartasVolta);
+
+	mostrarMensagem("Quartas de final gerada com sucesso!", 5000, true);
+};
+
+let buscaTimeById = (id) => {
+	const times = localStorage.getObj("jogadores");
+
+	for(const time in times) {
+		if(times[time].time_id == id) {
+			
+			return times[time];
+		}
+	}
+};
+
+const buscaGanhadorConfrontos = (resultado) => {
+	const times = [], vencedor = {};
+
+	for(const id in resultado) {
+		times.push({ id, vitorias: resultado[id].vitorias, pontos: resultado[id].pontos });
+	}
+
+	times.sort(sortByPontosCartola);
+
+	if(times[0].vitorias >= times[1].vitorias) {
+		return buscaTimeById(times[0].id);
+	} else if(times[0].vitorias < times[1].vitorias){
+		return buscaTimeById(times[1].id);
+	}
 };
 
 let criarJogo = (casa, fora, rodada = null) => {
