@@ -25,8 +25,9 @@ let bindEventos = () => {
 	$(".salvaJogadores").click(salvarDados);
 	$(".logo").html(`<img src="${chrome.extension.getURL("images/logo.png")}" />`);
 	$("#botaoSalvar").click(enviarDados);
-	$("#botaoGerarOitavas").click(verificarSeGeraOitavas);
 	$("#botaoGerarQuartas").click(verificarSeGeraQuartas);
+	$("#botaoGerarSemi").click(verificarSeGeraSemi);
+	$("#botaoGerarFinal").click(verificarSeGeraFinal);
 };
 
 let salvarDados = () => {
@@ -353,19 +354,23 @@ let atualizarDadosRodada = (rodada, callback) => {
 	let grupos = localStorage.getObj("grupos"),
 		confrontosFase1Ida = localStorage.getObj("confrontosFase1Ida"),
 		confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
-		confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
-		confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
 		confrontosQuartasIda = localStorage.getObj("confrontosQuartasIda"),
 		confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
+		confrontosSemiIda = localStorage.getObj("confrontosSemiIda"),
+		confrontosSemiVolta = localStorage.getObj("confrontosSemiVolta"),
+		confrontosFinalIda = localStorage.getObj("confrontosFinalIda"),
+		confrontosFinalVolta = localStorage.getObj("confrontosFinalVolta"),
 		toleranciaEmpate = localStorage.getObj("toleranciaEmpate") || 0,
 		confrontos = [], gerouAlteracaoGrupo = false, gerouAlteracaoFinais = false;
 
 	confrontosGrupos(confrontos, confrontosFase1Ida, rodada, "grupoIda");
 	confrontosGrupos(confrontos, confrontosFase1Volta, rodada, "grupoVolta");
-	confrontosFinais(confrontos, confrontosOitavasIda, rodada, "oitavasIda");
-	confrontosFinais(confrontos, confrontosOitavasVolta, rodada, "oitavasVolta");
 	confrontosFinais(confrontos, confrontosQuartasIda, rodada, "quartasIda");
 	confrontosFinais(confrontos, confrontosQuartasVolta, rodada, "quartasVolta");
+	confrontosFinais(confrontos, confrontosSemiIda, rodada, "semiIda");
+	confrontosFinais(confrontos, confrontosSemiVolta, rodada, "semiVolta");
+	confrontosFinais(confrontos, confrontosFinalIda, rodada, "finalIda");
+	confrontosFinais(confrontos, confrontosFinalVolta, rodada, "finalVolta");
 
 	loop("atualizartimes", confrontos, (confronto, next) => {
 		let pontosTimeA = 0, pontosTimeB = 0, timePontuar = null;
@@ -410,17 +415,25 @@ let atualizarDadosRodada = (rodada, callback) => {
 							grupos[confronto.grupo][k].pontosCartola = grupos[confronto.grupo][k].pontosCartola + pontosTimeB;
 						}
 					}
-				} else if(timePontuar && (confronto.fase === "oitavasIda" || confronto.fase === "oitavasVolta" || confronto.fase === "quartasIda" || confronto.fase === "quartasVolta")) {
+				} else if(timePontuar && 
+						(confronto.fase === "quartasIda" || confronto.fase === "quartasVolta" || 
+							confronto.fase === "semiIda" || confronto.fase === "semiVolta" || 
+							confronto.fase === "finalIda" || confronto.fase === "finalVolta")
+						) {
 					gerouAlteracaoFinais = true;
 
-					if(confronto.fase === "oitavasIda") {
-						adicionarInfoAoConfronto(confrontosOitavasIda, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
-					} else if(confronto.fase === "oitavasVolta") {
-						adicionarInfoAoConfronto(confrontosOitavasVolta, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
-					} else if(confronto.fase === "quartasIda") {
+					if(confronto.fase === "quartasIda") {
 						adicionarInfoAoConfronto(confrontosQuartasIda, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
 					} else if(confronto.fase === "quartasVolta") {
 						adicionarInfoAoConfronto(confrontosQuartasVolta, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
+					} else if(confronto.fase === "semiIda") {
+						adicionarInfoAoConfronto(confrontosSemiIda, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
+					} else if(confronto.fase === "semiVolta") {
+						adicionarInfoAoConfronto(confrontosSemiVolta, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
+					} else if(confronto.fase === "finalIda") {
+						adicionarInfoAoConfronto(confrontosFinalIda, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
+					} else if(confronto.fase === "finalVolta") {
+						adicionarInfoAoConfronto(confrontosFinalVolta, confronto.jogo, timePontuar, pontosTimeA, pontosTimeB);
 					}
 				}
 
@@ -437,11 +450,14 @@ let atualizarDadosRodada = (rodada, callback) => {
 			localStorage.setObj("confrontosFase1Ida", confrontosFase1Ida);
 			localStorage.setObj("confrontosFase1Volta", confrontosFase1Volta);
 		} else if(gerouAlteracaoFinais) {
-			localStorage.setObj("confrontosOitavasIda", confrontosOitavasIda);
-			localStorage.setObj("confrontosOitavasVolta", confrontosOitavasVolta);
-
 			localStorage.setObj("confrontosQuartasIda", confrontosQuartasIda);
 			localStorage.setObj("confrontosQuartasVolta", confrontosQuartasVolta);
+
+			localStorage.setObj("confrontosSemiIda", confrontosSemiIda);
+			localStorage.setObj("confrontosSemiVolta", confrontosSemiVolta);
+
+			localStorage.setObj("confrontosFinalIda", confrontosFinalIda);
+			localStorage.setObj("confrontosFinalVolta", confrontosFinalVolta);
 		}
 
 		if(gerouAlteracaoGrupo || gerouAlteracaoFinais) {
@@ -537,10 +553,12 @@ let enviarDados = () => {
 	grupos = localStorage.getObj("grupos"),
 	confrontosFase1Ida = localStorage.getObj("confrontosFase1Ida"),
 	confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
-	confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
-	confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
 	confrontosQuartasIda = localStorage.getObj("confrontosQuartasIda"),
 	confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
+	confrontosSemiIda = localStorage.getObj("confrontosSemiIda"),
+	confrontosSemiVolta = localStorage.getObj("confrontosSemiVolta"),
+	confrontosFinalIda = localStorage.getObj("confrontosFinalIda"),
+	confrontosFinalVolta = localStorage.getObj("confrontosFinalVolta"),
 	admin = localStorage.getObj("admin");
 
 	if(admin && admin._id) {
@@ -559,20 +577,28 @@ let enviarDados = () => {
 		objeto["confrontosFase1Volta"] = confrontosFase1Volta;
 	}
 
-	if(confrontosOitavasIda) {
-		objeto["confrontosOitavasIda"] = confrontosOitavasIda;
-	}
-	
-	if(confrontosOitavasVolta) {
-		objeto["confrontosOitavasVolta"] = confrontosOitavasVolta;
-	}
-
 	if(confrontosQuartasIda) {
 		objeto["confrontosQuartasIda"] = confrontosQuartasIda;
 	}
 	
 	if(confrontosQuartasVolta) {
 		objeto["confrontosQuartasVolta"] = confrontosQuartasVolta;
+	}
+
+	if(confrontosSemiIda) {
+		objeto["confrontosSemiIda"] = confrontosSemiIda;
+	}
+	
+	if(confrontosSemiVolta) {
+		objeto["confrontosSemiVolta"] = confrontosSemiVolta;
+	}
+
+	if(confrontosFinalIda) {
+		objeto["confrontosFinalIda"] = confrontosFinalIda;
+	}
+	
+	if(confrontosFinalVolta) {
+		objeto["confrontosFinalVolta"] = confrontosFinalVolta;
 	}
 
 	$.ajax({
@@ -591,37 +617,51 @@ let enviarDados = () => {
 	});
 };
 
-let verificarSeGeraOitavas = () => {
+let verificarSeGeraQuartas = () => {
 	const confrontosFase1Volta = localStorage.getObj("confrontosFase1Volta"),
-		confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
+	confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
 		ultimoJogoFase1Volta = confrontosFase1Volta[confrontosFase1Volta.length - 1][confrontosFase1Volta[0].length - 1];
 
-	if(confrontosOitavasVolta) {
-		mostrarMensagem("Oitavas de final j&#xE1; foram geradas ;)");
+	if(confrontosQuartasVolta) {
+		mostrarMensagem("Quartas de final j&#xE1; foram geradas ;)");
 	} else if (ultimoJogoFase1Volta.vencedor) {
-		gerarOitavas(ultimoJogoFase1Volta);
+		gerarQuartas(ultimoJogoFase1Volta);
 	} else {
 		mostrarMensagem("Ops! A primeira fase ainda n&#xE3;o acabou ;)");
 	}
 };
 
-let verificarSeGeraQuartas = () => {
-	const confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
-		confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
-		ultimoJogoOitavasVolta = confrontosOitavasVolta[confrontosOitavasVolta.length - 1];
+let verificarSeGeraSemi = () => {
+	const confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta") || {},
+		confrontosSemiVolta = localStorage.getObj("confrontosSemiVolta"),
+		ultimoJogoQuartasVolta = confrontosQuartasVolta[confrontosQuartasVolta.length - 1] || {};
 
-	if(confrontosQuartasVolta) {
-		mostrarMensagem("Quartas de final j&#xE1; foram geradas ;)");
-	} else if (ultimoJogoOitavasVolta.vencedor) {
-		gerarQuartas(ultimoJogoOitavasVolta);
+	if(confrontosSemiVolta) {
+		mostrarMensagem("Semi finais j&#xE1; foram geradas ;)");
+	} else if (ultimoJogoQuartasVolta.vencedor) {
+		gerarSemi(ultimoJogoQuartasVolta);
 	} else {
-		mostrarMensagem("Ops! As oitavas de final ainda n&#xE3;o acabou ;)");
+		mostrarMensagem("Ops! As quartas de final ainda n&#xE3;o acabaram ;)");
 	}
 };
 
-let gerarOitavas = (ultimoConfronto) => {
+let verificarSeGeraFinal = () => {
+	const confrontosSemiVolta = localStorage.getObj("confrontosSemiVolta") || {},
+		confrontosFinalVolta = localStorage.getObj("confrontosFinalVolta"),
+		ultimoJogoSemiVolta = confrontosSemiVolta[confrontosSemiVolta.length - 1] || {};
+
+	if(confrontosFinalVolta) {
+		mostrarMensagem("Final j&#xE1; foi gerada ;)");
+	} else if (ultimoJogoSemiVolta.vencedor) {
+		gerarFinal(ultimoJogoSemiVolta);
+	} else {
+		mostrarMensagem("Ops! A semi final ainda n&#xE3;o acabou ;)");
+	}
+};
+
+let gerarQuartas = (ultimoConfronto) => {
 	let rodada = ultimoConfronto.rodada, grupos = localStorage.getObj("grupos"), 
-		classificados = [], confrontosOitavasIda = [], confrontosOitavasVolta = [];
+		classificados = [], confrontosQuartasIda = [], confrontosQuartasVolta = [];
 	
 	for(let i in grupos) {
 		let count = 1;
@@ -639,40 +679,40 @@ let gerarOitavas = (ultimoConfronto) => {
 
 	rodada++;
 
-	// Oitavas Ida
-	confrontosOitavasIda.push(criarJogo(classificados[0], classificados[7], rodada));
-	confrontosOitavasIda.push(criarJogo(classificados[1], classificados[6], rodada));
-	confrontosOitavasIda.push(criarJogo(classificados[2], classificados[5], rodada));
-	confrontosOitavasIda.push(criarJogo(classificados[3], classificados[4], rodada));
+	// Quartas Ida
+	confrontosQuartasIda.push(criarJogo(classificados[0], classificados[7], rodada));
+	confrontosQuartasIda.push(criarJogo(classificados[1], classificados[6], rodada));
+	confrontosQuartasIda.push(criarJogo(classificados[2], classificados[5], rodada));
+	confrontosQuartasIda.push(criarJogo(classificados[3], classificados[4], rodada));
 
 	rodada++;
 
-	// Oitavas Volta
-	confrontosOitavasVolta.push(criarJogo(classificados[7], classificados[0], rodada));
-	confrontosOitavasVolta.push(criarJogo(classificados[6], classificados[1], rodada));
-	confrontosOitavasVolta.push(criarJogo(classificados[5], classificados[2], rodada));
-	confrontosOitavasVolta.push(criarJogo(classificados[4], classificados[3], rodada));
+	// Quartas Volta
+	confrontosQuartasVolta.push(criarJogo(classificados[7], classificados[0], rodada));
+	confrontosQuartasVolta.push(criarJogo(classificados[6], classificados[1], rodada));
+	confrontosQuartasVolta.push(criarJogo(classificados[5], classificados[2], rodada));
+	confrontosQuartasVolta.push(criarJogo(classificados[4], classificados[3], rodada));
 
-	localStorage.setObj("confrontosOitavasIda", confrontosOitavasIda);
-	localStorage.setObj("confrontosOitavasVolta", confrontosOitavasVolta);
+	localStorage.setObj("confrontosQuartasIda", confrontosQuartasIda);
+	localStorage.setObj("confrontosQuartasVolta", confrontosQuartasVolta);
 
-	mostrarMensagem("Oitavas de final gerada com sucesso!", 5000, true);
+	mostrarMensagem("Quartas de final gerada com sucesso!", 5000, true);
 };
 
-let gerarQuartas = (ultimoConfronto) => {
+let gerarSemi = (ultimoConfronto) => {
 	let rodada = ultimoConfronto.rodada;
 
 	const resultados = [], resultadosArr = [],
-		confrontosOitavasIda = localStorage.getObj("confrontosOitavasIda"),
-		confrontosOitavasVolta = localStorage.getObj("confrontosOitavasVolta"),
-		confrontosQuartasIda = [], confrontosQuartasVolta = [];
+		confrontosQuartasIda = localStorage.getObj("confrontosQuartasIda"),
+		confrontosQuartasVolta = localStorage.getObj("confrontosQuartasVolta"),
+		confrontosSemiIda = [], confrontosSemiVolta = [];
 
 	let contador = 0;
 
-	for(const i in confrontosOitavasIda) {
-		const timeCasa = confrontosOitavasIda[i].casa,
-			timeFora = confrontosOitavasIda[i].fora,
-			vencedor = confrontosOitavasIda[i].vencedor;
+	for(const i in confrontosQuartasIda) {
+		const timeCasa = confrontosQuartasIda[i].casa,
+			timeFora = confrontosQuartasIda[i].fora,
+			vencedor = confrontosQuartasIda[i].vencedor;
 
 		if(!resultados[contador]) {
 			resultados[contador] = {};
@@ -695,10 +735,10 @@ let gerarQuartas = (ultimoConfronto) => {
 
 	contador = 0;
 
-	for(const j in confrontosOitavasVolta) {
-		const timeCasa = confrontosOitavasVolta[j].casa,
-			timeFora = confrontosOitavasVolta[j].fora,
-			vencedor = confrontosOitavasVolta[j].vencedor;
+	for(const j in confrontosQuartasVolta) {
+		const timeCasa = confrontosQuartasVolta[j].casa,
+			timeFora = confrontosQuartasVolta[j].fora,
+			vencedor = confrontosQuartasVolta[j].vencedor;
 
 		if(vencedor === timeCasa.id) {
 			resultados[contador][timeCasa.id].vitorias++;
@@ -719,20 +759,92 @@ let gerarQuartas = (ultimoConfronto) => {
 
 	rodada++;
 
-	// Quartas Ida
-	confrontosQuartasIda.push(criarJogo(classificado1, classificado2, rodada));
-	confrontosQuartasIda.push(criarJogo(classificado3, classificado4, rodada));
+	// Semi Ida
+	confrontosSemiIda.push(criarJogo(classificado1, classificado2, rodada));
+	confrontosSemiIda.push(criarJogo(classificado3, classificado4, rodada));
 
 	rodada++;
 
-	// Quartas Volta
-	confrontosQuartasVolta.push(criarJogo(classificado2, classificado1, rodada));
-	confrontosQuartasVolta.push(criarJogo(classificado4, classificado3, rodada));
+	// Semi Volta
+	confrontosSemiVolta.push(criarJogo(classificado2, classificado1, rodada));
+	confrontosSemiVolta.push(criarJogo(classificado4, classificado3, rodada));
 
-	localStorage.setObj("confrontosQuartasIda", confrontosQuartasIda);
-	localStorage.setObj("confrontosQuartasVolta", confrontosQuartasVolta);
+	localStorage.setObj("confrontosSemiIda", confrontosSemiIda);
+	localStorage.setObj("confrontosSemiVolta", confrontosSemiVolta);
 
-	mostrarMensagem("Quartas de final gerada com sucesso!", 5000, true);
+	mostrarMensagem("Semi finais gerada com sucesso!", 5000, true);
+};
+
+let gerarFinal = (ultimoConfronto) => {
+	let rodada = ultimoConfronto.rodada;
+
+	const resultados = [], resultadosArr = [],
+		confrontosSemiIda = localStorage.getObj("confrontosSemiIda"),
+		confrontosSemiVolta = localStorage.getObj("confrontosSemiVolta"),
+		confrontosFinalIda = [], confrontosFinalVolta = [];
+
+	let contador = 0;
+
+	for(const i in confrontosSemiIda) {
+		const timeCasa = confrontosSemiIda[i].casa,
+			timeFora = confrontosSemiIda[i].fora,
+			vencedor = confrontosSemiIda[i].vencedor;
+
+		if(!resultados[contador]) {
+			resultados[contador] = {};
+
+			resultados[contador][timeCasa.id] = { vitorias: 0, pontos: 0 };
+			resultados[contador][timeFora.id] = { vitorias: 0, pontos: 0 };
+		}
+
+		if(vencedor === timeCasa.id) {
+			resultados[contador][timeCasa.id].vitorias++;
+		} else if(vencedor === timeFora.id) {
+			resultados[contador][timeFora.id].vitorias++;
+		}
+
+		resultados[contador][timeCasa.id].pontos+= timeCasa.pontos;
+		resultados[contador][timeFora.id].pontos+= timeFora.pontos;
+
+		contador++;
+	}
+
+	contador = 0;
+
+	for(const j in confrontosSemiVolta) {
+		const timeCasa = confrontosSemiVolta[j].casa,
+			timeFora = confrontosSemiVolta[j].fora,
+			vencedor = confrontosSemiVolta[j].vencedor;
+
+		if(vencedor === timeCasa.id) {
+			resultados[contador][timeCasa.id].vitorias++;
+		} else if(vencedor === timeFora.id) {
+			resultados[contador][timeFora.id].vitorias++;
+		}
+
+		resultados[contador][timeCasa.id].pontos+= timeCasa.pontos;
+		resultados[contador][timeFora.id].pontos+= timeFora.pontos;
+
+		contador++;
+	}
+
+	const classificado1 = buscaGanhadorConfrontos(resultados[0]),
+		classificado2 = buscaGanhadorConfrontos(resultados[1]);
+
+	rodada++;
+
+	// Final Ida
+	confrontosFinalIda.push(criarJogo(classificado1, classificado2, rodada));
+
+	rodada++;
+
+	// Final Volta
+	confrontosFinalVolta.push(criarJogo(classificado2, classificado1, rodada));
+
+	localStorage.setObj("confrontosFinalIda", confrontosFinalIda);
+	localStorage.setObj("confrontosFinalVolta", confrontosFinalVolta);
+
+	mostrarMensagem("Final gerada com sucesso!", 5000, true);
 };
 
 let buscaTimeById = (id) => {

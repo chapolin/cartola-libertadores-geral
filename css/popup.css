@@ -11,23 +11,27 @@
 }
 
 .jogos-ida-titulo::after, 
-.jogos-oitavas-ida-titulo::after,
-.jogos-quartas-ida-titulo::after {
+.jogos-quartas-ida-titulo::after,
+.jogos-semi-ida-titulo::after,
+.jogos-final-ida-titulo::after {
   background: #134d9a url(../images/botao-ida.png) no-repeat center;
 }
 
 .jogos-volta-titulo::after, 
-.jogos-oitavas-volta-titulo::after,
-.jogos-quartas-volta-titulo::after {
+.jogos-quartas-volta-titulo::after,
+.jogos-semi-volta-titulo::after,
+.jogos-final-volta-titulo::after {
   background: #134d9a url(../images/botao-volta.png) no-repeat center;
 }
 
 .jogos-ida-titulo::after, 
 .jogos-volta-titulo::after, 
-.jogos-oitavas-ida-titulo::after, 
-.jogos-oitavas-volta-titulo::after,
 .jogos-quartas-ida-titulo::after, 
-.jogos-quartas-volta-titulo::after {
+.jogos-quartas-volta-titulo::after,
+.jogos-semi-ida-titulo::after, 
+.jogos-semi-volta-titulo::after,
+.jogos-final-ida-titulo::after, 
+.jogos-final-volta-titulo::after {
   content: "";
   float: right;
   text-indent: 999px;
@@ -41,10 +45,12 @@
 #formJogadores,
 .jogos-volta-titulo, 
 .jogos-volta, 
-.jogos-oitavas-volta-titulo, 
-.jogos-oitavas-volta,
 .jogos-quartas-volta-titulo, 
-.jogos-quartas-volta {
+.jogos-quartas-volta,
+.jogos-semi-volta-titulo, 
+.jogos-semi-volta,
+.jogos-final-volta-titulo, 
+.jogos-final-volta {
   display: none;
 }
 
